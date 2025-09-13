@@ -1,7 +1,10 @@
+import NavBarUNK from '@/components/ui/NavBarUnk';
+import '@/styles/globals.css';
+import '@/styles/index.scss';
 import type { Metadata, Viewport } from 'next';
 import { Chakra_Petch, Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-import './styles/ok.module.scss';
+
+// Si ya tienes los miembros en src/data, usa esto:
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({
@@ -35,7 +38,20 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} ${chakra.variable} antialiased`}
             >
-                {children}
+                <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
+                    <header className="pt-2">
+                        {/* Navbar   */}
+                        <NavBarUNK />
+                        {/* BANNER */}
+                        <div className="flex justify-center pt-2">
+                            <img src="/img/unk_banner.webp" alt="UNK banner" />
+                        </div>
+                    </header>
+                    {children}
+                </div>
+                <footer className="py-8 text-center opacity-50 text-xs">
+                    © {new Date().getFullYear()} UNK
+                </footer>
             </body>
         </html>
     );

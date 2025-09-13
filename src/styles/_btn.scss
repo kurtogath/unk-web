@@ -1,0 +1,16 @@
+.unk-btn {
+    margin-top: 5rem;
+    padding: 2.5rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.yellow {
+        background-color: var(--unk-yellow);
+    }
+
+    &.red {
+        background-color: var(--unk-red);
+    }
+}
