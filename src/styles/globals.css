@@ -1,14 +1,10 @@
 @import 'tailwindcss';
 
-body {
-    font-family:
-        'Chakra Petch',
-        system-ui,
-        -apple-system,
-        Segoe UI,
-        Roboto,
-        Arial,
-        sans-serif;
+* {
+    box-sizing: border-box;
+}
+html {
+    height: 100%;
 }
 
 :root {
@@ -36,5 +32,39 @@ body {
 body {
     background: var(--background);
     color: var(--foreground);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family:
+        'Chakra Petch',
+        system-ui,
+        -apple-system,
+        Segoe UI,
+        Roboto,
+        Arial,
+        sans-serif;
+    height: 100%;
+    /* Fallback para navegadores antiguos */
+    min-height: 100vh;
+
+    /* iOS/Android modernos: dvh ajusta barras dinámicas */
+    min-height: 100dvh;
+
+    /* Si prefieres ser ultra explícito:
+  min-block-size: 100vh;
+  min-block-size: 100dvh; */
+
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+header,
+footer {
+    flex: 0 0 auto;
+}
+
+footer {
+    margin-top: auto;
 }

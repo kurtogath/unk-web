@@ -42,10 +42,6 @@ export default function RootLayout({
                     <header className="pt-2">
                         {/* Navbar   */}
                         <NavBarUNK />
-                        {/* BANNER */}
-                        <div className="flex justify-center pt-2">
-                            <img src="/img/unk_banner.webp" alt="UNK banner" />
-                        </div>
                     </header>
                     {children}
                 </div>

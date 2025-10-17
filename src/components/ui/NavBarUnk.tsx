@@ -28,13 +28,9 @@ export default function NavBarUNK() {
             </Link>
 
             <ul className="menu">
-                <li className={isActive('/') ? 'active' : undefined}>
-                    <Link href="/">Home</Link>
-                </li>
-
                 <li
                     ref={dropdownRef}
-                    className={`${'dropdown'} ${isActive('/integrantes') ? 'active' : ''}`}
+                    className={`dropdown`}
                     onMouseEnter={() => setOpen(true)}
                     onMouseLeave={() => setOpen(false)}
                     onKeyDown={onKeyDown}

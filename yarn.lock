@@ -12,6 +12,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.27.0":
+  version: 7.28.4
+  resolution: "@babel/runtime@npm:7.28.4"
+  checksum: 10c0/792ce7af9750fb9b93879cc9d1db175701c4689da890e6ced242ea0207c9da411ccf16dc04e689cc01158b28d7898c40d75598f4559109f761c12ce01e959bf7
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:^1.4.3, @emnapi/core@npm:^1.4.5":
   version: 1.5.0
   resolution: "@emnapi/core@npm:1.5.0"
@@ -3482,6 +3489,7 @@ __metadata:
     prettier: "npm:^3.6.2"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
+    react-social-icons: "npm:^6.25.0"
     sass: "npm:^1.92.1"
     swiper: "npm:^11.2.10"
     tailwindcss: "npm:^4.1.13"
@@ -3890,6 +3898,18 @@ __metadata:
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: 10c0/33977da7a5f1a287936a0c85639fec6ca74f4f15ef1e59a6bc20338fc73dc69555381e211f7a3529b8150a1f71e4225525b41b60b52965bda53ce7d47377ada1
+  languageName: node
+  linkType: hard
+
+"react-social-icons@npm:^6.25.0":
+  version: 6.25.0
+  resolution: "react-social-icons@npm:6.25.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.27.0"
+  peerDependencies:
+    react: 16.x.x || 17.x.x || 18.x.x || 19.x.x
+    react-dom: 16.x.x || 17.x.x || 18.x.x || 19.x.x
+  checksum: 10c0/745597cb3459018b7294cfc3f0e8ca3b9d337d0990d4f2f5c9d197f6aea997310f9bb410aea4b961994a4f4662a08645eff5e1e99e9b1776cf49c9c3c19f82e5
   languageName: node
   linkType: hard
 

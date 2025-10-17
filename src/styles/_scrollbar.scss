@@ -1,0 +1,54 @@
+/* Variables para tema (opcional) */
+:root {
+    --sb-bg: #0b1020; /* fondo pista */
+    --sb-track: #121a2f; /* pista */
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin; /* auto | thin | none */
+    scrollbar-color: var(--unk-yellow) var(--sb-track);
+}
+
+/* Chromium, Edge, Safari, iOS (WebKit) */
+*::-webkit-scrollbar {
+    width: 10px; /* vertical */
+    height: 10px; /* horizontal */
+}
+*::-webkit-scrollbar-track {
+    background: var(--sb-track);
+}
+*::-webkit-scrollbar-thumb {
+    background: var(--unk-yellow);
+    border-radius: 999px;
+    border: 2px solid var(--sb-track); /* “padding” visual */
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--sb-track);
+}
+*::-webkit-scrollbar-thumb:active {
+    background: var(--sb-track);
+}
+*::-webkit-scrollbar-corner {
+    background: var(--sb-track);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+}
+
+/* WebKit: haces el thumb más tenue y lo intensificas al hover del contenedor */
+.scroller {
+    overflow: auto;
+}
+.scroller::-webkit-scrollbar {
+    width: 5px;
+}
+.scroller::-webkit-scrollbar-thumb {
+    background: rgba(100, 100, 100, 0.35);
+    border-radius: 999px;
+}
+.scroller:hover::-webkit-scrollbar-thumb {
+    background: rgba(100, 100, 100, 0.7);
+}
