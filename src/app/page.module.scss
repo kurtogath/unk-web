@@ -1,0 +1,276 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    background: radial-gradient(
+        circle at center,
+        #a0e7d8 0%,
+        #6ecfbd 15%,
+        #4db5a5 30%,
+        #3a9b8e 45%,
+        #2d7d74 60%,
+        #235f5a 75%,
+        #1a4a47 90%,
+        #133938 100%
+    );
+    background-attachment: fixed;
+}
+
+// Notch Superior
+.notchContainer {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.notch {
+    width: 100%;
+    height: auto;
+    max-width: 800px;
+    object-fit: contain;
+}
+
+.discordLink {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    cursor: pointer;
+
+    &:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+        filter: brightness(1.2);
+    }
+
+    &:active {
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+}
+
+.discordLogo {
+    width: auto;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+// Logo
+.logoContainer {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.mainLogo {
+    width: 100%;
+    height: auto;
+    max-width: 400px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+// Staff Section
+.staffSection {
+    padding: 40px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.signedBy {
+    font-family: 'Brush Script MT', cursive, sans-serif;
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    font-weight: 300;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.staffGrid {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.staffLink {
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    display: block;
+    border-radius: 50%;
+
+    &:hover {
+        transform: translateY(-5px);
+    }
+
+    &:active {
+        transform: translateY(-2px);
+    }
+}
+
+.staffAvatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    object-fit: cover;
+    object-position: center;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    background-color: white;
+
+    .staffLink:hover & {
+        border-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+    }
+}
+
+// Responsive Design
+// Tablets (landscape phones)
+@media (max-width: 768px) {
+    .notch {
+        max-width: 90%;
+    }
+
+    .discordLogo {
+        width: 50px;
+        height: 50px;
+    }
+
+    .logoContainer {
+        padding: 30px 20px;
+    }
+
+    .mainLogo {
+        max-width: 320px;
+    }
+
+    .signedBy {
+        font-size: 1.75rem;
+    }
+
+    .staffAvatar {
+        width: 85px;
+        height: 85px;
+    }
+
+    .staffGrid {
+        gap: 18px;
+    }
+
+    .staffSection {
+        padding: 35px 20px 50px;
+    }
+}
+
+// Mobile devices
+@media (max-width: 480px) {
+    .notch {
+        max-width: 95%;
+    }
+
+    .discordLogo {
+        width: 45px;
+        height: 45px;
+    }
+
+    .logoContainer {
+        padding: 20px 15px;
+    }
+
+    .mainLogo {
+        max-width: 280px;
+    }
+
+    .signedBy {
+        font-size: 1.5rem;
+    }
+
+    .staffAvatar {
+        width: 75px;
+        height: 75px;
+        border-width: 2px;
+    }
+
+    .staffGrid {
+        gap: 15px;
+    }
+
+    .staffSection {
+        padding: 30px 15px 40px;
+        gap: 18px;
+    }
+}
+
+// Extra small devices
+@media (max-width: 360px) {
+    .discordLogo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mainLogo {
+        max-width: 240px;
+    }
+
+    .signedBy {
+        font-size: 1.3rem;
+    }
+
+    .staffAvatar {
+        width: 65px;
+        height: 65px;
+    }
+
+    .staffGrid {
+        gap: 12px;
+    }
+
+    .staffSection {
+        padding: 25px 15px 35px;
+    }
+}
+
+// Landscape orientation (phones)
+@media (max-height: 600px) and (orientation: landscape) {
+    .logoContainer {
+        padding: 20px;
+    }
+
+    .mainLogo {
+        max-width: 250px;
+    }
+
+    .staffSection {
+        padding: 20px 20px 30px;
+    }
+
+    .signedBy {
+        font-size: 1.5rem;
+    }
+}
