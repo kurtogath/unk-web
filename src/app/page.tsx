@@ -16,7 +16,7 @@ export default function Home() {
         {
             name: 'Tresillo',
             image: '/tresillo.png',
-            link: 'https://www.instagram.com/tresilloo/',
+            link: 'https://www.instagram.com/tresilllo/',
         },
     ];
 
