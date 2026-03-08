@@ -63,7 +63,7 @@ export const metadata: Metadata = {
         siteName: 'UNK Edition',
         title: 'UNK Edition — Digital Community',
         description:
-            'Comunidad digital proveedora de herramientas digitales y experiencias interactivas."',
+            'Comunidad digital proveedora de herramientas digitales y experiencias interactivas.',
         // images: [
         //     {
         //         url: '/og-image.png', // Crea esta imagen 1200x630px
