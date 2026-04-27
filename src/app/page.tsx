@@ -256,13 +256,7 @@ export default function Home() {
                 </section>
 
                 <div className={styles.floatingStickers} aria-hidden="true">
-                    <Image
-                        src="/logos/footer.png"
-                        alt="FooterLogo"
-                        width={120}
-                        height={120}
-                        unoptimized
-                    />
+                    <Image src="/logos/footer.png" alt="FooterLogo" width={220} height={220} />
                 </div>
             </section>
         </main>
