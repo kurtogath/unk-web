@@ -1,5 +1,8 @@
+import type { DropItem, NewsItem, ProjectCard } from '@/app/types';
 import Image from 'next/image';
 import Link from 'next/link';
+import DropsSlider from './components/DropsSlider';
+import NewsSlider from './components/NewsSlider';
 import styles from './page.module.scss';
 
 const staffMembers = [
@@ -19,22 +22,6 @@ const staffMembers = [
         link: 'https://www.instagram.com/tresilllo/',
     },
 ];
-
-type ProjectCard = {
-    id: number;
-    locked?: boolean;
-    featured?: boolean;
-    title?: string;
-    timer?: string;
-    size?: 'default' | 'mid' | 'bottom';
-    tilt: 'tilt1' | 'tilt2' | 'tilt3' | 'tilt4';
-};
-
-type DropItem = {
-    id: number;
-    label: string;
-    variant: 'lock' | 'skull' | 'ring';
-};
 
 const topCards: ProjectCard[] = [
     { id: 1, featured: true, title: 'Rosalía o la Biblia', tilt: 'tilt2' },
@@ -58,11 +45,28 @@ const bottomCards: ProjectCard[] = [
     { id: 13, locked: true, size: 'bottom', tilt: 'tilt4' },
 ];
 
+const newsItems: NewsItem[] = [
+    { id: 1, image: '/cards/news/card1.png' },
+    { id: 2, image: '/cards/news/card2.png' },
+    { id: 3, image: '/cards/news/card3.png' },
+    { id: 4, image: '/cards/news/card4.png' },
+    { id: 5, image: '/cards/news/card5.png' },
+    { id: 6, image: '/cards/news/card6.png' },
+    { id: 7, image: '/cards/news/card1.png' },
+    { id: 8, image: '/cards/news/card2.png' },
+    { id: 9, image: '/cards/news/card3.png' },
+    { id: 10, image: '/cards/news/card4.png' },
+];
+
 const drops: DropItem[] = [
     { id: 1, label: 'UPCOMING', variant: 'lock' },
     { id: 2, label: 'UPCOMING', variant: 'lock' },
-    { id: 3, label: '26.11', variant: 'skull' },
-    { id: 4, label: '7.11', variant: 'ring' },
+    { id: 3, label: 'UPCOMING', variant: 'lock' },
+    { id: 4, label: 'UPCOMING', variant: 'lock' },
+    { id: 5, label: 'UPCOMING', variant: 'lock' },
+    { id: 6, label: 'UPCOMING', variant: 'lock' },
+    { id: 7, label: 'UPCOMING', variant: 'lock' },
+    { id: 8, label: 'UPCOMING', variant: 'lock' },
 ];
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -111,18 +115,6 @@ function NoteCard({ card }: { card: ProjectCard }) {
     );
 }
 
-function DropThumb({ variant }: { variant: DropItem['variant'] }) {
-    if (variant === 'skull') {
-        return <span className={styles.thumbAlt}>☠</span>;
-    }
-
-    if (variant === 'ring') {
-        return <span className={styles.thumbAlt}>◍</span>;
-    }
-
-    return <span className={styles.thumbLock}>🔒</span>;
-}
-
 export default function Home() {
     return (
         <main className={styles.page}>
@@ -152,7 +144,7 @@ export default function Home() {
                         >
                             <Image
                                 src={'/socialIcons/yt_icon.png'}
-                                alt="Instagram"
+                                alt="YouTube"
                                 width={38}
                                 height={30}
                             />
@@ -166,7 +158,7 @@ export default function Home() {
                         >
                             <Image
                                 src={'/socialIcons/tt_icon.png'}
-                                alt="Instagram"
+                                alt="TikTok"
                                 width={38}
                                 height={30}
                             />
@@ -180,7 +172,7 @@ export default function Home() {
                         >
                             <Image
                                 src={'/socialIcons/dc_icon.png'}
-                                alt="Instagram"
+                                alt="Discord"
                                 width={38}
                                 height={30}
                             />
@@ -249,44 +241,11 @@ export default function Home() {
             <section className={styles.contentSection} id="drops">
                 <div className={styles.columns}>
                     <section className={styles.panel} aria-labelledby="drops-title">
-                        <h2 className={styles.sectionTitle} id="drops-title">
-                            DROPS
-                        </h2>
-
-                        <div className={styles.dropsRow}>
-                            <button type="button" className={styles.navArrow} aria-label="Anterior">
-                                ‹
-                            </button>
-
-                            {drops.map((item) => (
-                                <article key={item.id} className={styles.dropItem}>
-                                    <div className={styles.dropThumb}>
-                                        <DropThumb variant={item.variant} />
-                                    </div>
-                                    <span>{item.label}</span>
-                                </article>
-                            ))}
-
-                            <button
-                                type="button"
-                                className={styles.navArrow}
-                                aria-label="Siguiente"
-                            >
-                                ›
-                            </button>
-                        </div>
+                        <DropsSlider drops={drops} />
                     </section>
 
                     <section className={styles.panel} aria-labelledby="news-title">
-                        <h2 className={styles.sectionTitle} id="news-title">
-                            NEWS
-                        </h2>
-
-                        <div className={styles.newsGrid}>
-                            <article className={styles.newsCard} />
-                            <article className={styles.newsCard} />
-                            <article className={cx(styles.newsCard, styles.hiddenMobile)} />
-                        </div>
+                        <NewsSlider news={newsItems} />
                     </section>
                 </div>
 
@@ -297,9 +256,13 @@ export default function Home() {
                 </section>
 
                 <div className={styles.floatingStickers} aria-hidden="true">
-                    <span>▣</span>
-                    <span>▤</span>
-                    <span>◫</span>
+                    <Image
+                        src="/logos/footer.png"
+                        alt="FooterLogo"
+                        width={120}
+                        height={120}
+                        unoptimized
+                    />
                 </div>
             </section>
         </main>
