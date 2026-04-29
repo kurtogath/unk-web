@@ -1,13 +1,12 @@
 'use client';
 
-import useEmblaCarousel from 'embla-carousel-react';
 import type { DropItem } from '@/app/types';
+import useEmblaCarousel from 'embla-carousel-react';
+import Image from 'next/image';
 import styles from '../page.module.scss';
 
-function DropThumb({ variant }: { variant: DropItem['variant'] }) {
-    if (variant === 'skull') return <span className={styles.thumbAlt}>☠</span>;
-    if (variant === 'ring') return <span className={styles.thumbAlt}>◍</span>;
-    return <span className={styles.thumbLock}>🔒</span>;
+function DropThumb({ image, alt }: { image: DropItem['image']; alt: DropItem['alt'] }) {
+    return <Image src={image} alt={alt ?? ''} width={100} height={100} />;
 }
 
 export default function DropsSlider({ drops }: { drops: DropItem[] }) {
@@ -41,7 +40,7 @@ export default function DropsSlider({ drops }: { drops: DropItem[] }) {
                                 className={`${styles.dropItem} ${styles.emblaSlide}`}
                             >
                                 <div className={styles.dropThumb}>
-                                    <DropThumb variant={item.variant} />
+                                    <DropThumb image={item.image} alt={item.alt} />
                                 </div>
                                 <span>{item.label}</span>
                             </article>

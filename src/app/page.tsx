@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import DropsSlider from './components/DropsSlider';
 import NewsSlider from './components/NewsSlider';
+import ThemeToggle from './components/ThemeToggle';
 import styles from './page.module.scss';
 
 const staffMembers = [
@@ -59,14 +60,14 @@ const newsItems: NewsItem[] = [
 ];
 
 const drops: DropItem[] = [
-    { id: 1, label: 'UPCOMING', variant: 'lock' },
-    { id: 2, label: 'UPCOMING', variant: 'lock' },
-    { id: 3, label: 'UPCOMING', variant: 'lock' },
-    { id: 4, label: 'UPCOMING', variant: 'lock' },
-    { id: 5, label: 'UPCOMING', variant: 'lock' },
-    { id: 6, label: 'UPCOMING', variant: 'lock' },
-    { id: 7, label: 'UPCOMING', variant: 'lock' },
-    { id: 8, label: 'UPCOMING', variant: 'lock' },
+    { id: 1, label: 'Rosalia', image: '/drops/drop2.png', alt: 'RosaliaDrop' },
+    { id: 2, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 1' },
+    { id: 3, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 2' },
+    { id: 4, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 3' },
+    { id: 5, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 4' },
+    { id: 6, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 5' },
+    { id: 7, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 6' },
+    { id: 8, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 7' },
 ];
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -186,6 +187,7 @@ export default function Home() {
                     </div>
 
                     <div className={styles.brand}>
+                        <ThemeToggle />
                         <Image
                             src={'/logos/PSY-OP.png'}
                             alt="PsyOP-Logo"

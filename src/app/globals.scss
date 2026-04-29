@@ -1,11 +1,39 @@
+:root {
+    --bg: #eeeeee;
+    --surface: #e7e7e7;
+    --fg: #111111;
+    --fg-muted: #555555;
+    --fg-subtle: #777777;
+    --border: #dddddd;
+    --border-soft: #cfcfcf;
+    --pill-bg: rgba(255, 255, 255, 0.35);
+    --pill-hover: #ffffff;
+    --grid-line: rgba(0, 0, 0, 0.04);
+    --drop-thumb: #0d0d0d;
+}
+
+.dark {
+    --bg: #212121; //#0d0d0d;
+    --surface: #161616;
+    --fg: #eeeeee;
+    --fg-muted: #999999;
+    --fg-subtle: #555555;
+    --border: #2a2a2a;
+    --border-soft: #333333;
+    --pill-bg: rgba(255, 255, 255, 0.07);
+    --pill-hover: #1e1e1e;
+    --grid-line: rgba(255, 255, 255, 0.04);
+    --drop-thumb: #1e1e1e;
+}
+
 html {
     scroll-behavior: smooth;
 }
 
 body {
     margin: 0;
-    background: #eeeeee;
-    color: #111;
+    background: var(--bg);
+    color: var(--fg);
     font-family: Arial, Helvetica, sans-serif;
 }
 

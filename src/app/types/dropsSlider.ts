@@ -1,5 +1,6 @@
 export type DropItem = {
     id: number;
     label: string;
-    variant: 'lock' | 'skull' | 'ring';
+    image: 'lock' | string;
+    alt?: string;
 };

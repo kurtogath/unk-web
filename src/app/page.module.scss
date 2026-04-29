@@ -32,14 +32,14 @@
             display: grid;
             place-items: center;
             border-radius: 8px;
-            color: #777;
+            color: var(--fg-subtle);
             font-size: 14px;
             text-decoration: none;
             transition: all 0.2s ease;
 
             &:hover {
                 transform: translateY(-2px);
-                background: #fff;
+                background: var(--pill-hover);
             }
         }
     }
@@ -67,10 +67,10 @@
 
     .menuPill {
         padding: 14px 22px;
-        border: 1px solid #cfcfcf;
+        border: 1px solid var(--border-soft);
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.35);
-        color: #555;
+        background: var(--pill-bg);
+        color: var(--fg-muted);
         font-size: 11px;
         letter-spacing: 0.35em;
         text-align: center;
@@ -88,11 +88,11 @@
 .board {
     min-height: 640px;
     padding: 50px;
-    border: 1px solid #dddddd;
-    background-color: #e7e7e7;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
     background-image:
-        linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-size: 24px 24px;
 }
 
@@ -226,10 +226,10 @@
     align-items: center;
     justify-content: center;
     padding: 13px 28px;
-    border: 1px solid #d0d0d0;
+    border: 1px solid var(--border-soft);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.35);
-    color: #111;
+    background: var(--pill-bg);
+    color: var(--fg);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.36em;
@@ -251,7 +251,7 @@
 .dropThumb {
     width: 98px;
     height: 98px;
-    background: #0d0d0d;
+    background: var(--drop-thumb);
     display: grid;
     place-items: center;
 }
@@ -281,10 +281,10 @@
     min-height: 400px;
     display: grid;
     place-items: center;
-    background: #e7e7e7;
+    background: var(--surface);
     background-image:
-        linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-size: 24px 24px;
 }
 
@@ -330,10 +330,10 @@
     flex-shrink: 0;
     width: 32px;
     height: 32px;
-    border: 1px solid #d0d0d0;
+    border: 1px solid var(--border-soft);
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.35);
-    color: #111;
+    background: var(--pill-bg);
+    color: var(--fg);
     font-size: 20px;
     cursor: pointer;
     display: grid;
@@ -341,7 +341,27 @@
     align-self: center;
 
     &:hover {
-        background: #fff;
+        background: var(--pill-hover);
+    }
+}
+
+.themeToggle {
+    width: 28px;
+    height: 28px;
+    margin-top: 8px;
+    border: 1px solid var(--border-soft);
+    border-radius: 50%;
+    background: var(--pill-bg);
+    color: var(--fg);
+    font-size: 13px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    align-self: flex-end;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: var(--pill-hover);
     }
 }
 
@@ -357,7 +377,7 @@
     font-size: 10px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #111;
+    color: var(--fg);
     flex-shrink: 0;
 }
 
