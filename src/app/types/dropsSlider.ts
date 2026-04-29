@@ -3,4 +3,5 @@ export type DropItem = {
     label: string;
     image: 'lock' | string;
     alt?: string;
+    link?: string;
 };

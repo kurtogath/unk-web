@@ -25,25 +25,95 @@ const staffMembers = [
 ];
 
 const topCards: ProjectCard[] = [
-    { id: 1, featured: true, title: 'Rosalía o la Biblia', tilt: 'tilt2' },
-    { id: 2, locked: true, tilt: 'tilt1' },
-    { id: 3, locked: true, tilt: 'tilt3' },
-    { id: 4, locked: true, tilt: 'tilt4' },
+    {
+        id: 1,
+        image: '/cards/projects/projectRosalia.png',
+        featured: true,
+        title: 'Rosalía o la Biblia',
+        tilt: 'tilt2',
+        link: 'https://rosalia.unkedition.com/',
+    },
+    { id: 2, image: '/cards/projects/projectLocked.png', locked: true, tilt: 'tilt1', title: '' },
+    { id: 3, image: '/cards/projects/projectLocked.png', locked: true, tilt: 'tilt3', title: '' },
+    { id: 4, image: '/cards/projects/projectLocked.png', locked: true, tilt: 'tilt4', title: '' },
 ];
 
 const middleCards: ProjectCard[] = [
-    { id: 5, locked: true, size: 'mid', tilt: 'tilt2' },
-    { id: 6, locked: true, size: 'mid', tilt: 'tilt1' },
-    { id: 7, locked: true, size: 'mid', tilt: 'tilt3' },
-    { id: 8, locked: true, size: 'mid', tilt: 'tilt4' },
-    { id: 9, locked: true, size: 'mid', tilt: 'tilt1' },
+    {
+        id: 5,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'mid',
+        tilt: 'tilt2',
+        title: '',
+    },
+    {
+        id: 6,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'mid',
+        tilt: 'tilt1',
+        title: '',
+    },
+    {
+        id: 7,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'mid',
+        tilt: 'tilt3',
+        title: '',
+    },
+    {
+        id: 8,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'mid',
+        tilt: 'tilt4',
+        title: '',
+    },
+    {
+        id: 9,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'mid',
+        tilt: 'tilt1',
+        title: '',
+    },
 ];
 
 const bottomCards: ProjectCard[] = [
-    { id: 10, locked: true, size: 'bottom', tilt: 'tilt1' },
-    { id: 11, locked: true, size: 'bottom', tilt: 'tilt2' },
-    { id: 12, locked: true, size: 'bottom', tilt: 'tilt3' },
-    { id: 13, locked: true, size: 'bottom', tilt: 'tilt4' },
+    {
+        id: 10,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'bottom',
+        tilt: 'tilt1',
+        title: '',
+    },
+    {
+        id: 11,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'bottom',
+        tilt: 'tilt2',
+        title: '',
+    },
+    {
+        id: 12,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'bottom',
+        tilt: 'tilt3',
+        title: '',
+    },
+    {
+        id: 13,
+        image: '/cards/projects/projectLocked.png',
+        locked: true,
+        size: 'bottom',
+        tilt: 'tilt4',
+        title: '',
+    },
 ];
 
 const newsItems: NewsItem[] = [
@@ -60,7 +130,13 @@ const newsItems: NewsItem[] = [
 ];
 
 const drops: DropItem[] = [
-    { id: 1, label: 'Rosalia', image: '/drops/drop2.png', alt: 'RosaliaDrop' },
+    {
+        id: 1,
+        label: 'Rosalia',
+        image: '/drops/drop2.png',
+        alt: 'RosaliaDrop',
+        link: 'https://rosalia.unkedition.com/',
+    },
     { id: 2, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 1' },
     { id: 3, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 2' },
     { id: 4, label: 'UPCOMING', image: '/drops/dropDefault.png', alt: 'Upcoming Drop 3' },
@@ -89,15 +165,11 @@ function NoteCard({ card }: { card: ProjectCard }) {
 
             {card.featured ? (
                 <div className={styles.featuredCard}>
-                    <a
-                        href="https://rosalia.unkedition.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
+                    <a href={card.link} target="_blank" rel="noopener noreferrer">
                         <Image
-                            src="/cards/projects/projectRosalia.png"
+                            src={card.image}
                             fill
-                            alt="ProjectLocked"
+                            alt={card.title}
                             style={{ objectFit: 'cover' }}
                         />
                     </a>

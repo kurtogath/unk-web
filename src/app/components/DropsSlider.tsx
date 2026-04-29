@@ -5,7 +5,21 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Image from 'next/image';
 import styles from '../page.module.scss';
 
-function DropThumb({ image, alt }: { image: DropItem['image']; alt: DropItem['alt'] }) {
+function DropThumb({
+    image,
+    alt,
+    link,
+}: {
+    image: DropItem['image'];
+    alt: DropItem['alt'];
+    link: DropItem['link'];
+}) {
+    if (link !== '')
+        return (
+            <a href={link} target="_blank" rel="noopener noreferrer">
+                <Image src={image} alt={alt ?? ''} width={100} height={100} />{' '}
+            </a>
+        );
     return <Image src={image} alt={alt ?? ''} width={100} height={100} />;
 }
 
@@ -40,7 +54,7 @@ export default function DropsSlider({ drops }: { drops: DropItem[] }) {
                                 className={`${styles.dropItem} ${styles.emblaSlide}`}
                             >
                                 <div className={styles.dropThumb}>
-                                    <DropThumb image={item.image} alt={item.alt} />
+                                    <DropThumb image={item.image} alt={item.alt} link={item.link} />
                                 </div>
                                 <span>{item.label}</span>
                             </article>
