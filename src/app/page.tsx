@@ -1,3 +1,4 @@
+import { getProjects } from '@/app/api/projects';
 import type { DropItem, NewsItem, ProjectCard } from '@/app/types';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,98 +22,6 @@ const staffMembers = [
         name: 'Tresillo',
         image: '/tresillo.png',
         link: 'https://www.instagram.com/tresilllo/',
-    },
-];
-
-const topCards: ProjectCard[] = [
-    {
-        id: 1,
-        image: '/cards/projects/projectRosalia.png',
-        featured: true,
-        title: 'Rosalía o la Biblia',
-        tilt: 'tilt2',
-        link: 'https://rosalia.unkedition.com/',
-    },
-    { id: 2, image: '/cards/projects/projectLocked.png', locked: true, tilt: 'tilt1', title: '' },
-    { id: 3, image: '/cards/projects/projectLocked.png', locked: true, tilt: 'tilt3', title: '' },
-    { id: 4, image: '/cards/projects/projectLocked.png', locked: true, tilt: 'tilt4', title: '' },
-];
-
-const middleCards: ProjectCard[] = [
-    {
-        id: 5,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'mid',
-        tilt: 'tilt2',
-        title: '',
-    },
-    {
-        id: 6,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'mid',
-        tilt: 'tilt1',
-        title: '',
-    },
-    {
-        id: 7,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'mid',
-        tilt: 'tilt3',
-        title: '',
-    },
-    {
-        id: 8,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'mid',
-        tilt: 'tilt4',
-        title: '',
-    },
-    {
-        id: 9,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'mid',
-        tilt: 'tilt1',
-        title: '',
-    },
-];
-
-const bottomCards: ProjectCard[] = [
-    {
-        id: 10,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'bottom',
-        tilt: 'tilt1',
-        title: '',
-    },
-    {
-        id: 11,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'bottom',
-        tilt: 'tilt2',
-        title: '',
-    },
-    {
-        id: 12,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'bottom',
-        tilt: 'tilt3',
-        title: '',
-    },
-    {
-        id: 13,
-        image: '/cards/projects/projectLocked.png',
-        locked: true,
-        size: 'bottom',
-        tilt: 'tilt4',
-        title: '',
     },
 ];
 
@@ -188,7 +97,13 @@ function NoteCard({ card }: { card: ProjectCard }) {
     );
 }
 
-export default function Home() {
+export default async function Home() {
+    const projects = await getProjects();
+
+    const topCardsBBDD: ProjectCard[] = projects.filter((p) => !p.size || p.size === 'default');
+    const middleCardsBBDD: ProjectCard[] = projects.filter((p) => p.size === 'mid');
+    const bottomCardsBBDD: ProjectCard[] = projects.filter((p) => p.size === 'bottom');
+
     return (
         <main className={styles.page}>
             <section className={styles.heroSection} id="top">
@@ -293,19 +208,19 @@ export default function Home() {
 
                 <section className={styles.board} id="projects" aria-label="Proyectos destacados">
                     <div className={cx(styles.cardsRow, styles.cardsRowTop)}>
-                        {topCards.map((card) => (
+                        {topCardsBBDD.map((card) => (
                             <NoteCard key={card.id} card={card} />
                         ))}
                     </div>
 
                     <div className={cx(styles.cardsRow, styles.cardsRowMid)}>
-                        {middleCards.map((card) => (
+                        {middleCardsBBDD.map((card) => (
                             <NoteCard key={card.id} card={card} />
                         ))}
                     </div>
 
                     <div className={cx(styles.cardsRow, styles.cardsRowBottom)}>
-                        {bottomCards.map((card) => (
+                        {bottomCardsBBDD.map((card) => (
                             <NoteCard key={card.id} card={card} />
                         ))}
                     </div>
