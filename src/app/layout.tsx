@@ -47,15 +47,9 @@ export const metadata: Metadata = {
     },
     // FAVICONS - Configuración explícita para Google
     icons: {
-        icon: [
-            { url: '/favicon.ico', sizes: 'any' },
-            { url: '/favicon.svg', type: 'image/svg+xml' },
-            { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
-        ],
-        apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+        icon: [{ url: '/favicon.ico', sizes: 'any' }],
         shortcut: [{ url: '/favicon.ico' }],
     },
-    manifest: '/site.webmanifest',
     openGraph: {
         type: 'website',
         locale: 'es_ES',
