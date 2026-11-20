@@ -2,7 +2,7 @@
 
 Documentación de cómo la web se conecta a la base de datos y qué datos lee de ella.
 
-La **capa de datos** (conexión, consultas, API y tipos) vive en la rama de desarrollo `kurto` y es independiente del diseño. Las **páginas que la usan** son del diseño nuevo (rama `new-design`); se marcan con _(new-design)_ en este documento.
+La **capa de datos** (conexión, consultas, API y tipos) vive en la rama de desarrollo `kurto` y es independiente del diseño. Casi todas las **páginas que la usan** son del diseño nuevo (rama `new-design`) y se marcan con _(new-design)_ en este documento. La excepción es el staff, que ya lo lee la Home actual de `kurto`.
 
 ## Resumen
 
@@ -10,11 +10,13 @@ La **capa de datos** (conexión, consultas, API y tipos) vive en la rama de desa
 - **Cliente:** [`pg`](https://node-postgres.com/) (`pg` + `@types/pg`). Sin ORM, las consultas son SQL escrito a mano.
 - **Acceso:** solo de lectura (`SELECT`). Todas las consultas se ejecutan en servidor (Server Components y Route Handlers). El navegador nunca habla con la BBDD directamente.
 
-```
+```text
 PostgreSQL
    │
    ▼
 src/app/lib/db.ts            ← pool de conexiones + helpers query() / transaction()
+   │
+   ├── src/app/lib/staff.ts      getStaff()     ──► Home, "Signed by" (src/app/page.tsx)    (kurto)
    │
    ├── src/app/lib/projects.ts   getProjects()  ──► Home (src/app/page.tsx)                (new-design)
    │
@@ -23,11 +25,13 @@ src/app/lib/db.ts            ← pool de conexiones + helpers query() / transact
                                                         └─► NewsGrid (scroll infinito)       (new-design)
 ```
 
-| Capa de datos (`kurto`) | Usa la capa de datos (`new-design`) |
-| --- | --- |
-| `src/app/lib/db.ts`, `src/app/lib/projects.ts`, `src/app/lib/news.ts` | `src/app/page.tsx` (Home) |
-| `src/app/api/news-feed/route.ts` | `src/app/noticias/page.tsx`, `src/app/noticias/NewsGrid.tsx` |
-| `src/app/types/projectCard.ts`, `src/app/types/newsArticle.ts` | |
+| Capa de datos (`kurto`) | La usan en `kurto` | La usan en `new-design` |
+| --- | --- | --- |
+| `src/app/lib/db.ts` | (todas) | (todas) |
+| `src/app/lib/staff.ts` | `src/app/page.tsx` (Home) | Aún no (el Footer tiene el staff en el código) |
+| `src/app/lib/projects.ts` | | `src/app/page.tsx` (Home) |
+| `src/app/lib/news.ts`, `src/app/api/news-feed/route.ts` | | `src/app/noticias/page.tsx`, `src/app/noticias/NewsGrid.tsx` |
+| `src/app/types/` (`StaffMember`, `ProjectCard`, `NewsArticle`) | | |
 
 ## Variables de entorno
 
@@ -118,7 +122,7 @@ Los cambios de esquema se guardan en `db/migrations/`, numerados y en orden (`00
 
 ### `staff`
 
-Personas que firman el proyecto ("Signed by"). Se mantiene desde el CRM. **Todavía no la lee la web**: los datos siguen escritos en el código (ver [Datos que no vienen de la BBDD](#datos-que-no-vienen-de-la-bbdd-todavía)).
+Personas que firman el proyecto ("Signed by"). Se mantiene desde el CRM; la Home la consulta en cada visita, así que los cambios se ven en cuanto se recarga la página (ver [Build y refresco de datos](#build-y-refresco-de-datos)).
 
 | Columna | Tipo | Notas |
 | --- | --- | --- |
@@ -132,6 +136,22 @@ Personas que firman el proyecto ("Signed by"). Se mantiene desde el CRM. **Todav
 | `created_at`, `updated_at` | `timestamptz` | `updated_at` se actualiza solo (trigger `set_updated_at()`) |
 
 ## Obtención de datos
+
+### Staff: `getStaff()`
+
+Archivo: `src/app/lib/staff.ts`
+
+```sql
+SELECT id, name, instagram_handle, avatar, role
+FROM staff
+WHERE active
+ORDER BY sort_order ASC, id ASC
+```
+
+- Devuelve `StaffMember[]` (`src/app/types/staffMember.ts`): `{ id, name, instagramUrl, avatar, role }`.
+- `instagram_handle` → `instagramUrl` (`https://www.instagram.com/<handle>/`).
+- Solo devuelve las filas con `active = true`.
+- **Se usa en:** `src/app/page.tsx` (Home de `kurto`), en la sección "Signed by". Cada avatar enlaza al Instagram; si `avatar` es `null`, se muestra un círculo con la inicial del nombre.
 
 ### Proyectos: `getProjects()`
 
@@ -177,12 +197,17 @@ LIMIT $1 OFFSET $2
 ## Build y refresco de datos
 
 - **`DATABASE_URL` siempre es obligatoria en el build**, aunque ninguna página consulte la BBDD: Next importa el route handler de `/api/news-feed` al compilar, y `db.ts` lanza un error si la variable no existe.
-- **Conexión con la BBDD en el build:** solo hace falta si alguna página consulta datos al generarse. En `kurto` no hay ninguna, así que el build funciona aunque la BBDD no esté accesible (la API solo conecta al recibir peticiones).
-- **Páginas con datos** _(new-design)_: la Home y `/noticias` declaran `export const revalidate = 60`.
-  - Se generan en el build, así que ahí **el build sí necesita conectar con la BBDD**.
-  - Después, Next las regenera en segundo plano como mucho cada 60 s cuando alguien las visita.
-  - Si la BBDD falla al regenerar, Next sigue sirviendo la última versión buena.
-  - Cualquier página nueva que use `getProjects()` o `getNews()` debería declarar también `revalidate` (o `dynamic = 'force-dynamic'`); si no, sus datos se congelan en el build.
+- Hay dos formas de que una página use datos de la BBDD sin congelarlos en el build:
+
+| | `export const dynamic = 'force-dynamic'` | `export const revalidate = 60` |
+| --- | --- | --- |
+| **Dónde** | Home de `kurto` (staff) | Home y `/noticias` _(new-design)_ |
+| **Cuándo consulta la BBDD** | En cada visita | En el build y, después, como mucho cada 60 s |
+| **Cambios del CRM** | Se ven en la siguiente visita | Tardan hasta 60 s |
+| **¿El build necesita la BBDD?** | No | Sí: si no conecta, el build falla y no se despliega |
+| **Si la BBDD cae** | La consulta falla en esa visita (la Home de `kurto` lo captura y oculta la sección "Signed by") | Next sigue sirviendo la última versión buena |
+
+- Cualquier página nueva que use `getStaff()`, `getProjects()` o `getNews()` tiene que declarar una de las dos; si no, sus datos se congelan en el build.
 
 ## Producción
 
@@ -247,17 +272,13 @@ No hay middleware ni clave de API: todos los datos que se exponen ya son públic
 
 ## Datos que **no** vienen de la BBDD (todavía)
 
-En `src/app/page.tsx` _(new-design)_ siguen escritos en el código:
+Siguen escritos en el código _(new-design)_:
 
-- `newsItems`: tarjetas del slider de noticias de la Home
-- `drops`: slider de drops
-
-El staff ya está en la tabla `staff`, pero la web todavía lo tiene escrito en el código:
-
-- `staffMembers` en `src/app/page.tsx` (`kurto`): sección "Signed by"
-- `staff` en `src/app/components/Footer.tsx` _(new-design)_
+- `newsItems` en `src/app/page.tsx`: tarjetas del slider de noticias de la Home
+- `drops` en `src/app/page.tsx`: slider de drops
+- `staff` en `src/app/components/Footer.tsx`: el staff del Footer. En `kurto` ya se lee de la tabla `staff` con `getStaff()`.
 
 ## Pendiente
 
-1. **Build sin BBDD** _(new-design)_. Si la BBDD no está accesible durante el build, el build falla, porque las páginas se prerenderizan con datos.
+1. **Build sin BBDD** _(new-design)_. Si la BBDD no está accesible durante el build, el build falla, porque las páginas con `revalidate` se prerenderizan con datos.
 2. **Imágenes de Instagram.** Las noticias serán Reels y publicaciones de Instagram. Si `news.image` lleva URLs externas, hay que permitir esos dominios en `images.remotePatterns` de `next.config.ts` o `next/image` dará error.
