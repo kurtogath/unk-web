@@ -1,17 +1,8 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.scss';
 import GoogleAnalytics from './lib/googleAnalytics';
-
-const geistSans = Geist({
-    variable: '--font-geist-sans',
-    subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-    variable: '--font-geist-mono',
-    subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
     title: 'UNK Edition',
@@ -98,7 +89,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es">
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+            <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
                 {/* Google Analytics */}
                 {process.env.NEXT_PUBLIC_GA_ID && (
                     <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
