@@ -2,7 +2,9 @@
 
 Documentación de cómo la web se conecta a la base de datos y qué datos lee de ella.
 
-La **capa de datos** (conexión, consultas, API y tipos) vive en la rama de desarrollo `kurto` y es independiente del diseño. Casi todas las **páginas que la usan** son del diseño nuevo (rama `new-design`) y se marcan con _(new-design)_ en este documento. La excepción es el staff, que ya lo lee la Home actual de `kurto`.
+La **capa de datos** (conexión, consultas, API y tipos) vive en la rama de desarrollo `kurto` y es independiente del diseño. Las **páginas que la usan** son del diseño nuevo (rama `new-design`) y se marcan con _(new-design)_ en este documento.
+
+El "Signed by" de la Home de `kurto` **no** sale de la BBDD, sino de la API del CRM: ver [CRM.md](CRM.md).
 
 ## Resumen
 
@@ -16,8 +18,6 @@ PostgreSQL
    ▼
 src/app/lib/db.ts            ← pool de conexiones + helpers query() / transaction()
    │
-   ├── src/app/lib/staff.ts      getStaff()     ──► Home, "Signed by" (src/app/page.tsx)    (kurto)
-   │
    ├── src/app/lib/projects.ts   getProjects()  ──► Home (src/app/page.tsx)                (new-design)
    │
    └── src/app/lib/news.ts       getNews()      ──► /noticias (src/app/noticias/page.tsx)  (new-design)
@@ -25,13 +25,14 @@ src/app/lib/db.ts            ← pool de conexiones + helpers query() / transact
                                                         └─► NewsGrid (scroll infinito)       (new-design)
 ```
 
-| Capa de datos (`kurto`) | La usan en `kurto` | La usan en `new-design` |
-| --- | --- | --- |
-| `src/app/lib/db.ts` | (todas) | (todas) |
-| `src/app/lib/staff.ts` | `src/app/page.tsx` (Home) | Aún no (el Footer tiene el staff en el código) |
-| `src/app/lib/projects.ts` | | `src/app/page.tsx` (Home) |
-| `src/app/lib/news.ts`, `src/app/api/news-feed/route.ts` | | `src/app/noticias/page.tsx`, `src/app/noticias/NewsGrid.tsx` |
-| `src/app/types/` (`StaffMember`, `ProjectCard`, `NewsArticle`) | | |
+| Capa de datos (`kurto`) | La usan en `new-design` |
+| --- | --- |
+| `src/app/lib/db.ts` | (todas las de abajo) |
+| `src/app/lib/projects.ts` | `src/app/page.tsx` (Home) |
+| `src/app/lib/news.ts`, `src/app/api/news-feed/route.ts` | `src/app/noticias/page.tsx`, `src/app/noticias/NewsGrid.tsx` |
+| `src/app/types/` (`ProjectCard`, `NewsArticle`) | |
+
+En `kurto`, de momento solo la usa la API `/api/news-feed`.
 
 ## Variables de entorno
 
@@ -41,6 +42,7 @@ En local se definen en `.env` (ignorado por git, **no se sube al repo**). En pro
 | --- | --- |
 | `DATABASE_URL` | Cadena de conexión a PostgreSQL, p. ej. `postgres://usuario:password@host:5432/basedatos`. **Obligatoria**: si falta, `db.ts` lanza un error al importarse y rompe tanto el arranque como el build. |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics (no tiene relación con la BBDD). |
+| `ADMIN_API_URL`, `ADMIN_API_KEY` | API del CRM para el "Signed by" (no tienen relación con la BBDD). Ver [CRM.md](CRM.md#variables-de-entorno). |
 
 ## Conexión: `src/app/lib/db.ts`
 
@@ -120,9 +122,9 @@ Los cambios de esquema se guardan en `db/migrations/`, numerados y en orden (`00
 | `id` | `bigint` |
 | `name` | `varchar` |
 
-### `staff`
+### `staff` (provisional, se borrará)
 
-Personas que firman el proyecto ("Signed by"). Se mantiene desde el CRM; la Home la consulta en cada visita, así que los cambios se ven en cuanto se recarga la página (ver [Build y refresco de datos](#build-y-refresco-de-datos)).
+Fue la primera versión del "Signed by". **Ya no la lee la web**: el "Signed by" sale ahora de la API del CRM ([CRM.md](CRM.md)). Se borrará con una migración `003_borrar_staff.sql` cuando la versión del CRM lleve unos días funcionando en producción.
 
 | Columna | Tipo | Notas |
 | --- | --- | --- |
@@ -136,22 +138,6 @@ Personas que firman el proyecto ("Signed by"). Se mantiene desde el CRM; la Home
 | `created_at`, `updated_at` | `timestamptz` | `updated_at` se actualiza solo (trigger `set_updated_at()`) |
 
 ## Obtención de datos
-
-### Staff: `getStaff()`
-
-Archivo: `src/app/lib/staff.ts`
-
-```sql
-SELECT id, name, instagram_handle, avatar, role
-FROM staff
-WHERE active
-ORDER BY sort_order ASC, id ASC
-```
-
-- Devuelve `StaffMember[]` (`src/app/types/staffMember.ts`): `{ id, name, instagramUrl, avatar, role }`.
-- `instagram_handle` → `instagramUrl` (`https://www.instagram.com/<handle>/`).
-- Solo devuelve las filas con `active = true`.
-- **Se usa en:** `src/app/page.tsx` (Home de `kurto`), en la sección "Signed by". Cada avatar enlaza al Instagram; si `avatar` es `null`, se muestra un círculo con la inicial del nombre.
 
 ### Proyectos: `getProjects()`
 
@@ -201,13 +187,13 @@ LIMIT $1 OFFSET $2
 
 | | `export const dynamic = 'force-dynamic'` | `export const revalidate = 60` |
 | --- | --- | --- |
-| **Dónde** | Home de `kurto` (staff) | Home y `/noticias` _(new-design)_ |
-| **Cuándo consulta la BBDD** | En cada visita | En el build y, después, como mucho cada 60 s |
-| **Cambios del CRM** | Se ven en la siguiente visita | Tardan hasta 60 s |
+| **Dónde** | Home de `kurto` (con el CRM, ver [CRM.md](CRM.md)) | Home y `/noticias` _(new-design)_ |
+| **Cuándo consulta los datos** | En cada visita | En el build y, después, como mucho cada 60 s |
+| **Cambios en los datos** | Se ven en la siguiente visita | Tardan hasta 60 s |
 | **¿El build necesita la BBDD?** | No | Sí: si no conecta, el build falla y no se despliega |
-| **Si la BBDD cae** | La consulta falla en esa visita (la Home de `kurto` lo captura y oculta la sección "Signed by") | Next sigue sirviendo la última versión buena |
+| **Si la fuente de datos cae** | La consulta falla en esa visita (hay que capturarlo; la Home de `kurto` oculta el "Signed by") | Next sigue sirviendo la última versión buena |
 
-- Cualquier página nueva que use `getStaff()`, `getProjects()` o `getNews()` tiene que declarar una de las dos; si no, sus datos se congelan en el build.
+- Cualquier página nueva que use `getProjects()` o `getNews()` tiene que declarar una de las dos; si no, sus datos se congelan en el build.
 
 ## Producción
 
@@ -222,12 +208,12 @@ El deploy se lanza al hacer push a `master` (`.github/workflows/deploy.yml`). Gi
 
 | Archivo | Dueño / permisos | Contenido |
 | --- | --- | --- |
-| `/var/www/unk-web/.env.production` | `webapps`, `600` | `NEXT_PUBLIC_GA_ID`, `DATABASE_URL` |
+| `/var/www/unk-web/.env.production` | `webapps`, `600` | `NEXT_PUBLIC_GA_ID`, `DATABASE_URL`, `ADMIN_API_URL`, `ADMIN_API_KEY` |
 | `/var/www/unk-web/.env` | `root`, `644` | `NEXT_PUBLIC_GA_ID` |
 
 - Next carga los dos en `next build` y `next start`; si una variable está en ambos, **gana `.env.production`**. Las variables nuevas van ahí.
 - Como están ignorados por git, `git reset --hard` no los toca. Solo los borraría un `git clean -x`.
-- `.env.production` contiene la contraseña de la BBDD: mantén los permisos en `600`.
+- `.env.production` contiene la contraseña de la BBDD y la clave del CRM: mantén los permisos en `600`.
 
 ### Conexión con la BBDD
 
@@ -276,7 +262,7 @@ Siguen escritos en el código _(new-design)_:
 
 - `newsItems` en `src/app/page.tsx`: tarjetas del slider de noticias de la Home
 - `drops` en `src/app/page.tsx`: slider de drops
-- `staff` en `src/app/components/Footer.tsx`: el staff del Footer. En `kurto` ya se lee de la tabla `staff` con `getStaff()`.
+- `staff` en `src/app/components/Footer.tsx`: el equipo del Footer, con nombres. Se deja así (decidido); el "Signed by" de `kurto` sale del CRM.
 
 ## Pendiente
 

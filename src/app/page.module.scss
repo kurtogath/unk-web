@@ -150,16 +150,6 @@
     }
 }
 
-// Avatar de reserva cuando un miembro del staff no tiene foto
-.staffInitial {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    font-weight: 600;
-    color: #222;
-}
-
 // Responsive Design
 // Tablets (landscape phones)
 @media (max-width: 768px) {
