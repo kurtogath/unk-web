@@ -14,7 +14,7 @@ PostgreSQL
    ▼
 src/app/lib/db.ts            ← pool de conexiones + helpers query() / transaction()
    │
-   ├── src/app/api/projects.ts   getProjects()  ──► Home (src/app/page.tsx)
+   ├── src/app/lib/projects.ts   getProjects()  ──► Home (src/app/page.tsx)
    │
    └── src/app/lib/news.ts       getNews()      ──► /noticias (src/app/noticias/page.tsx)
                                                 └─► GET /api/news-feed ──► NewsGrid (scroll infinito)
@@ -25,9 +25,8 @@ src/app/lib/db.ts            ← pool de conexiones + helpers query() / transact
 Definidas en `.env` (ignorado por git, **no se sube al repo**).
 
 | Variable | Uso |
-|---|---|
+| --- | --- |
 | `DATABASE_URL` | Cadena de conexión a PostgreSQL, p. ej. `postgres://usuario:password@host:5432/basedatos`. **Obligatoria**: si falta, `db.ts` lanza un error al importarse y rompe tanto el arranque como el build. |
-| `API_SECRET_KEY` | Clave que exige `middleware.ts` en la cabecera `x-api-key` para las rutas `/api/*` (ver [Problemas conocidos](#problemas-conocidos)). |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics (no tiene relación con la BBDD). |
 
 ## Conexión: `src/app/lib/db.ts`
@@ -35,7 +34,7 @@ Definidas en `.env` (ignorado por git, **no se sube al repo**).
 Crea un único `Pool` de `pg` y lo reutiliza.
 
 | Opción | Valor |
-|---|---|
+| --- | --- |
 | `connectionString` | `process.env.DATABASE_URL` |
 | `max` | 10 conexiones |
 | `idleTimeoutMillis` | 30 000 ms |
@@ -44,100 +43,115 @@ Crea un único `Pool` de `pg` y lo reutiliza.
 
 - **Singleton:** en desarrollo el pool se guarda en `global.pgPool`, así el hot reload no abre conexiones nuevas cada vez.
 - **Errores:** los errores del pool se registran con `console.error`.
+- **Columnas `DATE`:** se devuelven como texto `'YYYY-MM-DD'` (`types.setTypeParser`). Por defecto `pg` las convertiría en un `Date` a medianoche de la zona horaria del servidor, y el día mostrado podría cambiar según dónde se ejecute.
 
 ### Helpers exportados
 
 ```ts
 // Ejecuta una consulta parametrizada y devuelve las filas tipadas
-query<T>(text: string, params?: any[]): Promise<T[]>
+query<T extends QueryResultRow>(text: string, params?: unknown[]): Promise<T[]>
 
 // Ejecuta un callback dentro de BEGIN / COMMIT, con ROLLBACK si falla
-transaction<T>(callback: (client) => Promise<T>): Promise<T>
+transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T>
 ```
 
 Usa siempre parámetros (`$1`, `$2`…) y nunca concatenes valores en el SQL.
 
 ## Tablas utilizadas
 
-Esquema deducido de las consultas (no hay migraciones ni DDL en el repo).
+Tipos tomados de `information_schema` (no hay migraciones ni DDL en el repo).
 
 ### `projects`
 
-| Columna | Tipo esperado | Notas |
-|---|---|---|
-| `id` | entero | Se convierte a `number` |
-| `title` | texto | |
-| `locked` | booleano | Proyecto bloqueado |
-| `featured` | booleano | Proyecto destacado |
-| `size` | texto | `'default'`, `'mid'` o `'bottom'`: decide en qué fila de la home aparece |
-| `tilt` | texto | `'tilt1'` … `'tilt4'`: inclinación de la tarjeta |
-| `image` | texto | Ruta de la imagen (p. ej. `/cards/projects/projectRosalia.png`) |
-| `link` | texto, nullable | Si es `null` se convierte en `''` |
-| `sort_order` | entero | Orden de aparición |
+| Columna | Tipo | Notas |
+| --- | --- | --- |
+| `id` | `bigint` | Se convierte a `number` |
+| `title` | `varchar` | |
+| `locked` | `boolean` | Proyecto bloqueado. `null` → `false` |
+| `featured` | `boolean` | Proyecto destacado (muestra la imagen y el enlace). `null` → `false` |
+| `size` | enum | `'default'`, `'mid'` o `'bottom'`: decide en qué fila de la home aparece. `null` → `'default'` |
+| `tilt` | enum | `'tilt1'` … `'tilt4'`: inclinación de la tarjeta |
+| `image` | `text` | Ruta de la imagen (p. ej. `/cards/projects/projectRosalia.png`) |
+| `link` | `text`, nullable | Si es `null` se convierte en `''` |
+| `sort_order` | `integer` | Orden de aparición (solo se usa en el `ORDER BY`) |
+| `created_at`, `updated_at` | `timestamptz` | No se leen |
 
 ### `news`
 
-| Columna | Tipo esperado | Notas |
-|---|---|---|
-| `id` | entero | |
-| `title` | texto | |
-| `subtitle` | texto, nullable | |
-| `body` | texto/HTML, nullable | Se le quita el HTML y se recorta a 120 caracteres para el `excerpt` |
-| `image` | texto, nullable | |
-| `published_at` | fecha/timestamp | Se formatea como `20 NOV 2026` |
-| `views` | entero | |
-| `link` | texto | Enlace externo (Instagram) |
-| `category_id` | FK → `categories.id` | |
+| Columna | Tipo | Notas |
+| --- | --- | --- |
+| `id` | `bigint` | |
+| `title` | `varchar` | |
+| `subtitle` | `varchar`, nullable | |
+| `body` | `text` (HTML), nullable | Se pasa a texto plano y se recorta a 120 caracteres para el `excerpt` |
+| `image` | `text`, nullable | Ahora mismo ninguna noticia tiene imagen |
+| `published_at` | `date` | Sin hora. Se formatea como `20 NOV 2026` |
+| `views` | `integer` | |
+| `link` | `text` | Enlace externo (Instagram) |
+| `category_id` | `bigint` → `categories.id` | |
+| `created_at`, `updated_at` | `timestamptz` | No se leen |
 
 ### `categories`
 
-| Columna | Tipo esperado |
-|---|---|
-| `id` | entero |
-| `name` | texto |
+| Columna | Tipo |
+| --- | --- |
+| `id` | `bigint` |
+| `name` | `varchar` |
 
 ## Obtención de datos
 
 ### Proyectos: `getProjects()`
 
-Archivo: `src/app/api/projects.ts`
+Archivo: `src/app/lib/projects.ts`
 
 ```sql
-SELECT id, title, locked, featured, size, tilt, image, link, sort_order
+SELECT id, title, locked, featured, size, tilt, image, link
 FROM projects
-ORDER BY sort_order ASC
+ORDER BY sort_order ASC, id ASC
 ```
 
 - Devuelve `ProjectCard[]` (`src/app/types/projectCard.ts`).
-- `size = 'default'` se convierte en `undefined`.
 - **Se usa en:** `src/app/page.tsx` (Home). Ahí los proyectos se reparten en tres filas según `size`:
-  - fila superior: `default` o sin valor
+  - fila superior: `default`
   - fila central: `mid`
   - fila inferior: `bottom`
 
 ### Noticias: `getNews(page = 1, limit = 12)`
 
-Archivo: `src/app/lib/news.ts` (reexportado también desde `src/app/api/news.ts`)
+Archivo: `src/app/lib/news.ts`
 
 ```sql
 SELECT n.id, n.title, n.subtitle, n.body, n.image, n.published_at, n.views, n.link,
        c.name AS category
 FROM news n
 LEFT JOIN categories c ON c.id = n.category_id
-ORDER BY n.published_at DESC
+ORDER BY n.published_at DESC, n.id DESC
 LIMIT $1 OFFSET $2
 ```
 
+- **Orden estable:** `published_at` es una fecha sin hora y muchas noticias comparten día. El desempate por `id` hace que el orden sea siempre el mismo; sin él, la paginación por `OFFSET` podría repetir o saltarse noticias entre páginas.
 - **Paginación:** pide `limit + 1` filas. Si llegan más de `limit`, devuelve `hasMore = true`.
 - **Respuesta:** `{ articles: NewsArticle[], hasMore: boolean }` (`src/app/types/newsArticle.ts`).
 - **Transformaciones:**
-  - `body` → `excerpt` (sin HTML, máximo 120 caracteres + `…`)
-  - `published_at` → `publishedAt` con mes abreviado en español
-  - `id` y `views` se convierten a `number`
+  - `body` → `excerpt`: las etiquetas se cambian por un espacio (para que no se peguen las palabras de párrafos distintos), se decodifican las entidades HTML (`&amp;`, `&aacute;`, `&#225;`…), se normalizan los espacios y se recorta a 120 caracteres + `…` sin partir emojis.
+  - `published_at` → `publishedAt` con mes abreviado en español. Como llega como texto `'YYYY-MM-DD'`, el resultado no depende de la zona horaria del servidor. Si la columna pasara a ser `timestamp`, se formatea en `Europe/Madrid`.
+  - `id` y `views` se convierten a `number`.
 - **Se usa en:**
   1. `src/app/noticias/page.tsx`: carga en servidor la página 1 (12 noticias).
-  2. `GET /api/news-feed?page=N&limit=M` (`src/app/api/news-feed/route.ts`): `page` como mínimo 1 y `limit` entre 1 y 50 (por defecto 12).
-  3. `src/app/noticias/NewsGrid.tsx` (cliente): llama a `/api/news-feed` al hacer scroll (scroll infinito con `IntersectionObserver`).
+  2. `GET /api/news-feed?page=N&limit=M` (`src/app/api/news-feed/route.ts`): ruta **pública** (sin clave). `page` entre 1 y 10 000 y `limit` entre 1 y 50; si no son números válidos se usan los valores por defecto (1 y 12). Si la BBDD falla, devuelve `500` con `{ error }`.
+  3. `src/app/noticias/NewsGrid.tsx` (cliente): llama a `/api/news-feed` al hacer scroll (scroll infinito con `IntersectionObserver`). Descarta noticias repetidas por `id`. Si una petición falla, deja de cargar sola y muestra un botón **Reintentar**.
+
+## Refresco de datos
+
+La Home y `/noticias` declaran `export const revalidate = 60`:
+
+- Se generan en el build, así que **el build necesita acceso a la BBDD** (`DATABASE_URL` en el `.env` del servidor).
+- Después, Next las regenera en segundo plano como mucho cada 60 s cuando alguien las visita.
+- Si la BBDD falla al regenerar, Next sigue sirviendo la última versión buena.
+
+## Seguridad de la API
+
+No hay middleware ni clave de API: todos los datos que se exponen ya son públicos en la web, y una clave enviada desde el navegador no sería secreta. Si en el futuro hay rutas privadas (p. ej. de escritura), protégelas con autenticación real en un `src/proxy.ts` (nombre que usa Next 16 en lugar de `middleware.ts`) limitado a esas rutas.
 
 ## Datos que **no** vienen de la BBDD (todavía)
 
@@ -146,18 +160,7 @@ En `src/app/page.tsx` siguen escritos en el código:
 - `newsItems`: tarjetas del slider de noticias de la Home
 - `drops`: slider de drops
 
-## Problemas conocidos
+## Pendiente
 
-1. **`/api/news-feed` y el middleware.** `middleware.ts` exige la cabecera `x-api-key` en todas las rutas `/api/*`, pero `NewsGrid.tsx` hace el `fetch` sin ella.
-   - Si el middleware se aplica, el scroll infinito recibe un 401 y falla (`data.articles` llega como `undefined`).
-   - Además, `middleware.ts` está en la raíz y el proyecto usa `src/`, así que Next probablemente lo ignora (debería estar en `src/`). En Next 16 el archivo pasa a llamarse `proxy.ts`. Si no se aplica, la API queda abierta.
-   - Hay que decidir si `/api/news-feed` es pública (excluirla del matcher) o usar otro mecanismo, porque una clave enviada desde el navegador deja de ser secreta.
-2. **Datos fijados en el build (sin verificar).** La Home y `/noticias` no declaran `dynamic` ni `revalidate`. Next puede prerenderizarlas en el build, lo que implica dos cosas:
-   - hace falta acceso a la BBDD durante el build;
-   - los datos quedan congelados hasta el siguiente deploy.
-
-   Si se quieren datos al día, añade `export const dynamic = 'force-dynamic'` o `export const revalidate = <segundos>`.
-3. **Sin manejo de errores.** Ni `getProjects()`, ni `getNews()`, ni el route handler capturan errores. Si la BBDD cae, la página entera falla.
-4. **Desajustes de tipos:**
-   - `ProjectCard` tiene `timer`, que no se selecciona en la consulta.
-   - La consulta devuelve `sort_order`, que no está en el tipo.
+1. **Build sin BBDD.** Si la BBDD no está accesible durante el build, el build falla (las páginas se prerenderizan con datos).
+2. **Imágenes de Instagram.** Las noticias serán Reels y publicaciones de Instagram. Si `news.image` lleva URLs externas, hay que permitir esos dominios en `images.remotePatterns` de `next.config.ts` o `next/image` dará error.

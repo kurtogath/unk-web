@@ -55,21 +55,38 @@ export function NewsGrid({
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(initialHasMore);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
 
     const loadMore = useCallback(async () => {
         if (loading || !hasMore) return;
         setLoading(true);
+        setError(false);
         const nextPage = page + 1;
-        const res = await fetch(`/api/news-feed?page=${nextPage}&limit=${LIMIT}`);
-        const data: { articles: NewsArticle[]; hasMore: boolean } = await res.json();
-        setArticles((prev) => [...prev, ...data.articles]);
-        setHasMore(data.hasMore);
-        setPage(nextPage);
-        setLoading(false);
+        try {
+            const res = await fetch(`/api/news-feed?page=${nextPage}&limit=${LIMIT}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data: { articles: NewsArticle[]; hasMore: boolean } = await res.json();
+            // La primera página puede venir de caché (revalidate), así que si se
+            // publicó algo entretanto el offset se desplaza: evitamos duplicados.
+            setArticles((prev) => {
+                const seen = new Set(prev.map((a) => a.id));
+                return [...prev, ...data.articles.filter((a) => !seen.has(a.id))];
+            });
+            setHasMore(data.hasMore);
+            setPage(nextPage);
+        } catch (err) {
+            console.error('Error cargando más noticias:', err);
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
     }, [loading, hasMore, page]);
 
     useEffect(() => {
+        // Tras un error no reintentamos solos (evita un bucle de peticiones):
+        // el usuario reintenta con el botón.
+        if (error) return;
         const sentinel = sentinelRef.current;
         if (!sentinel) return;
         const observer = new IntersectionObserver(
@@ -78,7 +95,7 @@ export function NewsGrid({
         );
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [loadMore]);
+    }, [loadMore, error]);
 
     return (
         <>
@@ -91,6 +108,14 @@ export function NewsGrid({
             {loading && (
                 <div className={styles.loadingSpinner}>
                     <span /><span /><span />
+                </div>
+            )}
+            {error && !loading && (
+                <div className={styles.loadError}>
+                    <p>No se pudieron cargar más noticias.</p>
+                    <button type="button" onClick={loadMore}>
+                        Reintentar
+                    </button>
                 </div>
             )}
         </>

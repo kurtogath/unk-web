@@ -1,9 +1,12 @@
-import { getProjects } from '@/app/api/projects';
+import { getProjects } from '@/app/lib/projects';
 import type { DropItem, NewsItem, ProjectCard } from '@/app/types';
 import Image from 'next/image';
 import DropsSlider from './components/DropsSlider';
 import NewsSlider from './components/NewsSlider';
 import styles from './page.module.scss';
+
+// Regenera la página con datos de la BBDD como mucho cada 60 s.
+export const revalidate = 60;
 
 const newsItems: NewsItem[] = [
     { id: 1, image: '/cards/news/card1.png' },

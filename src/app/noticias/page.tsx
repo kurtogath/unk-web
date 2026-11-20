@@ -2,6 +2,9 @@ import { getNews } from '@/app/lib/news';
 import { NewsGrid } from './NewsGrid';
 import styles from './page.module.scss';
 
+// Regenera la página con datos de la BBDD como mucho cada 60 s.
+export const revalidate = 60;
+
 export default async function Noticias() {
     const { articles, hasMore } = await getNews(1, 12);
 
