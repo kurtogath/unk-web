@@ -1,6 +1,10 @@
 # Base de datos: conexión y obtención de datos
 
-Documentación de cómo la web (rama `new-design`) se conecta a la base de datos y qué datos lee de ella.
+Documentación de cómo la web se conecta a la base de datos y qué datos lee de ella.
+
+La **capa de datos** (conexión, consultas, API y tipos) vive en la rama de desarrollo `kurto` y es independiente del diseño. Las **páginas que la usan** son del diseño nuevo (rama `new-design`) y se marcan con _(new-design)_ en este documento.
+
+El "Signed by" de la Home de `kurto` **no** sale de la BBDD, sino de la API del CRM: ver [CRM.md](CRM.md).
 
 ## Resumen
 
@@ -8,26 +12,37 @@ Documentación de cómo la web (rama `new-design`) se conecta a la base de datos
 - **Cliente:** [`pg`](https://node-postgres.com/) (`pg` + `@types/pg`). Sin ORM, las consultas son SQL escrito a mano.
 - **Acceso:** solo de lectura (`SELECT`). Todas las consultas se ejecutan en servidor (Server Components y Route Handlers). El navegador nunca habla con la BBDD directamente.
 
-```
+```text
 PostgreSQL
    │
    ▼
 src/app/lib/db.ts            ← pool de conexiones + helpers query() / transaction()
    │
-   ├── src/app/lib/projects.ts   getProjects()  ──► Home (src/app/page.tsx)
+   ├── src/app/lib/projects.ts   getProjects()  ──► Home (src/app/page.tsx)                (new-design)
    │
-   └── src/app/lib/news.ts       getNews()      ──► /noticias (src/app/noticias/page.tsx)
-                                                └─► GET /api/news-feed ──► NewsGrid (scroll infinito)
+   └── src/app/lib/news.ts       getNews()      ──► /noticias (src/app/noticias/page.tsx)  (new-design)
+                                                └─► GET /api/news-feed
+                                                        └─► NewsGrid (scroll infinito)       (new-design)
 ```
+
+| Capa de datos (`kurto`) | La usan en `new-design` |
+| --- | --- |
+| `src/app/lib/db.ts` | (todas las de abajo) |
+| `src/app/lib/projects.ts` | `src/app/page.tsx` (Home) |
+| `src/app/lib/news.ts`, `src/app/api/news-feed/route.ts` | `src/app/noticias/page.tsx`, `src/app/noticias/NewsGrid.tsx` |
+| `src/app/types/` (`ProjectCard`, `NewsArticle`) | |
+
+En `kurto`, de momento solo la usa la API `/api/news-feed`.
 
 ## Variables de entorno
 
-Definidas en `.env` (ignorado por git, **no se sube al repo**).
+En local se definen en `.env` (ignorado por git, **no se sube al repo**). En producción, ver [Producción](#producción).
 
 | Variable | Uso |
 | --- | --- |
 | `DATABASE_URL` | Cadena de conexión a PostgreSQL, p. ej. `postgres://usuario:password@host:5432/basedatos`. **Obligatoria**: si falta, `db.ts` lanza un error al importarse y rompe tanto el arranque como el build. |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics (no tiene relación con la BBDD). |
+| `ADMIN_API_URL`, `ADMIN_API_KEY` | API del CRM para el "Signed by" (no tienen relación con la BBDD). Ver [CRM.md](CRM.md#variables-de-entorno). |
 
 ## Conexión: `src/app/lib/db.ts`
 
@@ -59,7 +74,16 @@ Usa siempre parámetros (`$1`, `$2`…) y nunca concatenes valores en el SQL.
 
 ## Tablas utilizadas
 
-Tipos tomados de `information_schema` (no hay migraciones ni DDL en el repo).
+Tipos tomados de `information_schema`.
+
+### Migraciones
+
+Los cambios de esquema se guardan en `db/migrations/`, numerados y en orden (`001_…`, `002_…`). Se ejecutan a mano contra la BBDD; no hay herramienta de migraciones. Las tablas anteriores a la carpeta (`projects`, `news`, `categories`, `tags`, `news_tags`) no tienen DDL en el repo.
+
+| Archivo | Qué hace |
+| --- | --- |
+| `001_staff.sql` | Crea la tabla `staff` y su trigger de `updated_at` |
+| `002_staff_seed.sql` | Datos iniciales de `staff` (con `ON CONFLICT DO NOTHING`, no pisa cambios del CRM) |
 
 ### `projects`
 
@@ -98,6 +122,21 @@ Tipos tomados de `information_schema` (no hay migraciones ni DDL en el repo).
 | `id` | `bigint` |
 | `name` | `varchar` |
 
+### `staff` (provisional, se borrará)
+
+Fue la primera versión del "Signed by". **Ya no la lee la web**: el "Signed by" sale ahora de la API del CRM ([CRM.md](CRM.md)). Se borrará con una migración `003_borrar_staff.sql` cuando la versión del CRM lleve unos días funcionando en producción.
+
+| Columna | Tipo | Notas |
+| --- | --- | --- |
+| `id` | `bigint` | |
+| `name` | `varchar(50)`, único | Nombre que se muestra |
+| `instagram_handle` | `varchar(30)`, único | Solo el usuario, sin `@` ni URL. `CHECK`: letras, números, `.` y `_`, máx. 30. La URL se construye como `https://www.instagram.com/<handle>/` |
+| `avatar` | `text`, nullable | Ruta de la foto (p. ej. `/tresillo.png`). Si tiene valor, no puede estar vacío |
+| `role` | `varchar(50)`, nullable | Opcional, por si el diseño lo muestra |
+| `sort_order` | `integer` | Orden de aparición |
+| `active` | `boolean` | `false` para ocultar sin borrar |
+| `created_at`, `updated_at` | `timestamptz` | `updated_at` se actualiza solo (trigger `set_updated_at()`) |
+
 ## Obtención de datos
 
 ### Proyectos: `getProjects()`
@@ -111,7 +150,7 @@ ORDER BY sort_order ASC, id ASC
 ```
 
 - Devuelve `ProjectCard[]` (`src/app/types/projectCard.ts`).
-- **Se usa en:** `src/app/page.tsx` (Home). Ahí los proyectos se reparten en tres filas según `size`:
+- **Se usa en:** `src/app/page.tsx` (Home) _(new-design)_. Ahí los proyectos se reparten en tres filas según `size`:
   - fila superior: `default`
   - fila central: `mid`
   - fila inferior: `bottom`
@@ -137,17 +176,81 @@ LIMIT $1 OFFSET $2
   - `published_at` → `publishedAt` con mes abreviado en español. Como llega como texto `'YYYY-MM-DD'`, el resultado no depende de la zona horaria del servidor. Si la columna pasara a ser `timestamp`, se formatea en `Europe/Madrid`.
   - `id` y `views` se convierten a `number`.
 - **Se usa en:**
-  1. `src/app/noticias/page.tsx`: carga en servidor la página 1 (12 noticias).
+  1. `src/app/noticias/page.tsx` _(new-design)_: carga en servidor la página 1 (12 noticias).
   2. `GET /api/news-feed?page=N&limit=M` (`src/app/api/news-feed/route.ts`): ruta **pública** (sin clave). `page` entre 1 y 10 000 y `limit` entre 1 y 50; si no son números válidos se usan los valores por defecto (1 y 12). Si la BBDD falla, devuelve `500` con `{ error }`.
-  3. `src/app/noticias/NewsGrid.tsx` (cliente): llama a `/api/news-feed` al hacer scroll (scroll infinito con `IntersectionObserver`). Descarta noticias repetidas por `id`. Si una petición falla, deja de cargar sola y muestra un botón **Reintentar**.
+  3. `src/app/noticias/NewsGrid.tsx` _(new-design)_ (cliente): llama a `/api/news-feed` al hacer scroll (scroll infinito con `IntersectionObserver`). Descarta noticias repetidas por `id`. Si una petición falla, deja de cargar sola y muestra un botón **Reintentar**.
 
-## Refresco de datos
+## Build y refresco de datos
 
-La Home y `/noticias` declaran `export const revalidate = 60`:
+- **`DATABASE_URL` siempre es obligatoria en el build**, aunque ninguna página consulte la BBDD: Next importa el route handler de `/api/news-feed` al compilar, y `db.ts` lanza un error si la variable no existe.
+- Hay dos formas de que una página use datos de la BBDD sin congelarlos en el build:
 
-- Se generan en el build, así que **el build necesita acceso a la BBDD** (`DATABASE_URL` en el `.env` del servidor).
-- Después, Next las regenera en segundo plano como mucho cada 60 s cuando alguien las visita.
-- Si la BBDD falla al regenerar, Next sigue sirviendo la última versión buena.
+| | `export const dynamic = 'force-dynamic'` | `export const revalidate = 60` |
+| --- | --- | --- |
+| **Dónde** | Home de `kurto` (con el CRM, ver [CRM.md](CRM.md)) | Home y `/noticias` _(new-design)_ |
+| **Cuándo consulta los datos** | En cada visita | En el build y, después, como mucho cada 60 s |
+| **Cambios en los datos** | Se ven en la siguiente visita | Tardan hasta 60 s |
+| **¿El build necesita la BBDD?** | No | Sí: si no conecta, el build falla y no se despliega |
+| **Si la fuente de datos cae** | La consulta falla en esa visita (hay que capturarlo; la Home de `kurto` oculta el "Signed by") | Next sigue sirviendo la última versión buena |
+
+- Cualquier página nueva que use `getProjects()` o `getNews()` tiene que declarar una de las dos; si no, sus datos se congelan en el build.
+
+## Producción
+
+El deploy se lanza al hacer push a `master` (`.github/workflows/deploy.yml`). GitHub Actions entra por SSH al VPS y ejecuta `/usr/local/bin/deploy-unk-web.sh`, que, como usuario `webapps`:
+
+1. carga Node con nvm y activa pnpm con corepack;
+2. en `/var/www/unk-web`, hace `git fetch` + `git reset --hard origin/master`;
+3. ejecuta `pnpm install` y `pnpm build`;
+4. reinicia la app con `pm2 restart unk-web` (puerto 3000).
+
+### Variables de entorno en el servidor
+
+| Archivo | Dueño / permisos | Contenido |
+| --- | --- | --- |
+| `/var/www/unk-web/.env.production` | `webapps`, `600` | `NEXT_PUBLIC_GA_ID`, `DATABASE_URL`, `ADMIN_API_URL`, `ADMIN_API_KEY` |
+| `/var/www/unk-web/.env` | `root`, `644` | `NEXT_PUBLIC_GA_ID` |
+
+- Next carga los dos en `next build` y `next start`; si una variable está en ambos, **gana `.env.production`**. Las variables nuevas van ahí.
+- Como están ignorados por git, `git reset --hard` no los toca. Solo los borraría un `git clean -x`.
+- `.env.production` contiene la contraseña de la BBDD y la clave del CRM: mantén los permisos en `600`.
+
+### Conexión con la BBDD
+
+PostgreSQL está instalado directamente en el VPS (no en Docker) y escucha en el puerto **5432** de `localhost` (y de `172.17.0.1`, la interfaz de Docker). En producción:
+
+```ini
+DATABASE_URL=postgres://unk:<password>@localhost:5432/unkweb
+```
+
+En local el puerto es otro (p. ej. `5433`) si se accede a esa misma BBDD a través de un túnel SSH: **no copies la `DATABASE_URL` local al servidor sin cambiar el puerto**.
+
+### Comprobaciones
+
+Todas desde el VPS:
+
+```bash
+# Nombres de las variables (sin valores)
+sudo -u webapps bash -c 'cd /var/www/unk-web && sed "s/=.*//" .env.production'
+
+# DATABASE_URL con la contraseña oculta
+sudo -u webapps bash -c 'cd /var/www/unk-web && grep "^DATABASE_URL" .env.production | sed -E "s#(://[^:]+:)[^@]*@#\1***@#"'
+
+# Probar la conexión con esa misma URL
+sudo -u webapps bash -c 'cd /var/www/unk-web && psql "$(grep "^DATABASE_URL=" .env.production | cut -d= -f2- | tr -d "\"'"'"'")" -c "select count(*) from news"'
+
+# En qué puerto escucha Postgres
+sudo ss -ltnp | grep -E 'postgres|:543'
+
+# Carpeta desde la que arranca pm2 (pm2 viene de nvm: hay que cargarlo)
+sudo -u webapps bash -c 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; pm2 describe unk-web | grep -iE "exec cwd|script path"'
+```
+
+Y desde cualquier sitio, para ver que la API responde con datos:
+
+```bash
+curl -s "https://unkedition.com/api/news-feed?limit=1"
+```
 
 ## Seguridad de la API
 
@@ -155,12 +258,13 @@ No hay middleware ni clave de API: todos los datos que se exponen ya son públic
 
 ## Datos que **no** vienen de la BBDD (todavía)
 
-En `src/app/page.tsx` siguen escritos en el código:
+Siguen escritos en el código _(new-design)_:
 
-- `newsItems`: tarjetas del slider de noticias de la Home
-- `drops`: slider de drops
+- `newsItems` en `src/app/page.tsx`: tarjetas del slider de noticias de la Home
+- `drops` en `src/app/page.tsx`: slider de drops
+- `staff` en `src/app/components/Footer.tsx`: el equipo del Footer, con nombres. Se deja así (decidido); el "Signed by" de `kurto` sale del CRM.
 
 ## Pendiente
 
-1. **Build sin BBDD.** Si la BBDD no está accesible durante el build, el build falla (las páginas se prerenderizan con datos).
+1. **Build sin BBDD** _(new-design)_. Si la BBDD no está accesible durante el build, el build falla, porque las páginas con `revalidate` se prerenderizan con datos.
 2. **Imágenes de Instagram.** Las noticias serán Reels y publicaciones de Instagram. Si `news.image` lleva URLs externas, hay que permitir esos dominios en `images.remotePatterns` de `next.config.ts` o `next/image` dará error.
