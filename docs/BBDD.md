@@ -31,7 +31,7 @@ src/app/lib/db.ts            ← pool de conexiones + helpers query() / transact
 
 ## Variables de entorno
 
-Definidas en `.env` (ignorado por git, **no se sube al repo**).
+En local se definen en `.env` (ignorado por git, **no se sube al repo**). En producción, ver [Producción](#producción).
 
 | Variable | Uso |
 | --- | --- |
@@ -160,6 +160,63 @@ LIMIT $1 OFFSET $2
   - Si la BBDD falla al regenerar, Next sigue sirviendo la última versión buena.
   - Cualquier página nueva que use `getProjects()` o `getNews()` debería declarar también `revalidate` (o `dynamic = 'force-dynamic'`); si no, sus datos se congelan en el build.
 
+## Producción
+
+El deploy se lanza al hacer push a `master` (`.github/workflows/deploy.yml`). GitHub Actions entra por SSH al VPS y ejecuta `/usr/local/bin/deploy-unk-web.sh`, que, como usuario `webapps`:
+
+1. carga Node con nvm y activa pnpm con corepack;
+2. en `/var/www/unk-web`, hace `git fetch` + `git reset --hard origin/master`;
+3. ejecuta `pnpm install` y `pnpm build`;
+4. reinicia la app con `pm2 restart unk-web` (puerto 3000).
+
+### Variables de entorno en el servidor
+
+| Archivo | Dueño / permisos | Contenido |
+| --- | --- | --- |
+| `/var/www/unk-web/.env.production` | `webapps`, `600` | `NEXT_PUBLIC_GA_ID`, `DATABASE_URL` |
+| `/var/www/unk-web/.env` | `root`, `644` | `NEXT_PUBLIC_GA_ID` |
+
+- Next carga los dos en `next build` y `next start`; si una variable está en ambos, **gana `.env.production`**. Las variables nuevas van ahí.
+- Como están ignorados por git, `git reset --hard` no los toca. Solo los borraría un `git clean -x`.
+- `.env.production` contiene la contraseña de la BBDD: mantén los permisos en `600`.
+
+### Conexión con la BBDD
+
+PostgreSQL está instalado directamente en el VPS (no en Docker) y escucha en el puerto **5432** de `localhost` (y de `172.17.0.1`, la interfaz de Docker). En producción:
+
+```ini
+DATABASE_URL=postgres://unk:<password>@localhost:5432/unkweb
+```
+
+En local el puerto es otro (p. ej. `5433`) si se accede a esa misma BBDD a través de un túnel SSH: **no copies la `DATABASE_URL` local al servidor sin cambiar el puerto**.
+
+### Comprobaciones
+
+Todas desde el VPS:
+
+```bash
+# Nombres de las variables (sin valores)
+sudo -u webapps bash -c 'cd /var/www/unk-web && sed "s/=.*//" .env.production'
+
+# DATABASE_URL con la contraseña oculta
+sudo -u webapps bash -c 'cd /var/www/unk-web && grep "^DATABASE_URL" .env.production | sed -E "s#(://[^:]+:)[^@]*@#\1***@#"'
+
+# Probar la conexión con esa misma URL
+sudo -u webapps bash -c 'cd /var/www/unk-web && psql "$(grep "^DATABASE_URL=" .env.production | cut -d= -f2- | tr -d "\"'"'"'")" -c "select count(*) from news"'
+
+# En qué puerto escucha Postgres
+sudo ss -ltnp | grep -E 'postgres|:543'
+
+# Carpeta desde la que arranca pm2 (pm2 viene de nvm: hay que cargarlo)
+sudo -u webapps bash -c 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; pm2 describe unk-web | grep -iE "exec cwd|script path"'
+```
+
+Y desde cualquier sitio, para ver que la API responde con datos:
+
+```bash
+curl -s "https://unkedition.com/api/news-feed?limit=1"
+```
+
 ## Seguridad de la API
 
 No hay middleware ni clave de API: todos los datos que se exponen ya son públicos en la web, y una clave enviada desde el navegador no sería secreta. Si en el futuro hay rutas privadas (p. ej. de escritura), protégelas con autenticación real en un `src/proxy.ts` (nombre que usa Next 16 en lugar de `middleware.ts`) limitado a esas rutas.
@@ -173,6 +230,5 @@ En `src/app/page.tsx` _(new-design)_ siguen escritos en el código:
 
 ## Pendiente
 
-1. **Producción.** El deploy se lanza al hacer push a `master`. Antes de integrar la capa de datos en `master`, el `.env` del servidor de producción tiene que tener `DATABASE_URL` y la BBDD tiene que ser accesible desde ese servidor; si no, el build falla (falta la variable) o la API devuelve `500` (no hay conexión).
-2. **Build sin BBDD** _(new-design)_. Si la BBDD no está accesible durante el build, el build falla, porque las páginas se prerenderizan con datos.
-3. **Imágenes de Instagram.** Las noticias serán Reels y publicaciones de Instagram. Si `news.image` lleva URLs externas, hay que permitir esos dominios en `images.remotePatterns` de `next.config.ts` o `next/image` dará error.
+1. **Build sin BBDD** _(new-design)_. Si la BBDD no está accesible durante el build, el build falla, porque las páginas se prerenderizan con datos.
+2. **Imágenes de Instagram.** Las noticias serán Reels y publicaciones de Instagram. Si `news.image` lleva URLs externas, hay que permitir esos dominios en `images.remotePatterns` de `next.config.ts` o `next/image` dará error.
