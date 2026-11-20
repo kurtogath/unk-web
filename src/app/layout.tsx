@@ -1,20 +1,11 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import './globals.scss';
 import GoogleAnalytics from './lib/googleAnalytics';
 import Footer from './components/Footer';
 import Navbar from './components/Navbar';
 import ThemeProvider from './components/ThemeProvider';
-
-const geistSans = Geist({
-    variable: '--font-geist-sans',
-    subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-    variable: '--font-geist-mono',
-    subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
     title: 'UNK Edition',
@@ -50,15 +41,9 @@ export const metadata: Metadata = {
     },
     // FAVICONS - Configuración explícita para Google
     icons: {
-        icon: [
-            { url: '/favicon.ico', sizes: 'any' },
-            { url: '/favicon.svg', type: 'image/svg+xml' },
-            { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
-        ],
-        apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+        icon: [{ url: '/favicon.ico', sizes: 'any' }],
         shortcut: [{ url: '/favicon.ico' }],
     },
-    manifest: '/site.webmanifest',
     openGraph: {
         type: 'website',
         locale: 'es_ES',
@@ -107,7 +92,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es" suppressHydrationWarning>
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+            <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
                 <ThemeProvider>
                     {process.env.NEXT_PUBLIC_GA_ID && (
                         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
