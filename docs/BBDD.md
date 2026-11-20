@@ -68,7 +68,16 @@ Usa siempre parámetros (`$1`, `$2`…) y nunca concatenes valores en el SQL.
 
 ## Tablas utilizadas
 
-Tipos tomados de `information_schema` (no hay migraciones ni DDL en el repo).
+Tipos tomados de `information_schema`.
+
+### Migraciones
+
+Los cambios de esquema se guardan en `db/migrations/`, numerados y en orden (`001_…`, `002_…`). Se ejecutan a mano contra la BBDD; no hay herramienta de migraciones. Las tablas anteriores a la carpeta (`projects`, `news`, `categories`, `tags`, `news_tags`) no tienen DDL en el repo.
+
+| Archivo | Qué hace |
+| --- | --- |
+| `001_staff.sql` | Crea la tabla `staff` y su trigger de `updated_at` |
+| `002_staff_seed.sql` | Datos iniciales de `staff` (con `ON CONFLICT DO NOTHING`, no pisa cambios del CRM) |
 
 ### `projects`
 
@@ -106,6 +115,21 @@ Tipos tomados de `information_schema` (no hay migraciones ni DDL en el repo).
 | --- | --- |
 | `id` | `bigint` |
 | `name` | `varchar` |
+
+### `staff`
+
+Personas que firman el proyecto ("Signed by"). Se mantiene desde el CRM. **Todavía no la lee la web**: los datos siguen escritos en el código (ver [Datos que no vienen de la BBDD](#datos-que-no-vienen-de-la-bbdd-todavía)).
+
+| Columna | Tipo | Notas |
+| --- | --- | --- |
+| `id` | `bigint` | |
+| `name` | `varchar(50)`, único | Nombre que se muestra |
+| `instagram_handle` | `varchar(30)`, único | Solo el usuario, sin `@` ni URL. `CHECK`: letras, números, `.` y `_`, máx. 30. La URL se construye como `https://www.instagram.com/<handle>/` |
+| `avatar` | `text`, nullable | Ruta de la foto (p. ej. `/tresillo.png`). Si tiene valor, no puede estar vacío |
+| `role` | `varchar(50)`, nullable | Opcional, por si el diseño lo muestra |
+| `sort_order` | `integer` | Orden de aparición |
+| `active` | `boolean` | `false` para ocultar sin borrar |
+| `created_at`, `updated_at` | `timestamptz` | `updated_at` se actualiza solo (trigger `set_updated_at()`) |
 
 ## Obtención de datos
 
@@ -227,6 +251,11 @@ En `src/app/page.tsx` _(new-design)_ siguen escritos en el código:
 
 - `newsItems`: tarjetas del slider de noticias de la Home
 - `drops`: slider de drops
+
+El staff ya está en la tabla `staff`, pero la web todavía lo tiene escrito en el código:
+
+- `staffMembers` en `src/app/page.tsx` (`kurto`): sección "Signed by"
+- `staff` en `src/app/components/Footer.tsx` _(new-design)_
 
 ## Pendiente
 
